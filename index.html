@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#172a5c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coffee POS">
+  <link rel="manifest" href="manifest.json">
+  <title>Coffee Stand POS</title>
+  <style>
+    :root{--navy:#172a5c;--blue:#4ca6d8;--pink:#f06aa8;--yellow:#f6d65b;--cream:#fffaf0;--ink:#18233a;--muted:#657087;--line:#d9deea;--green:#3c8d63}
+    *{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#eef8ff,#fff4fa);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+    header{background:var(--navy);color:white;padding:16px 18px;position:sticky;top:0;z-index:5}header h1{margin:0;font-size:22px}
+    header small{opacity:.8}.wrap{max-width:1000px;margin:auto;padding:14px}.nav{display:flex;gap:8px;overflow:auto;padding-bottom:10px}.nav button{white-space:nowrap}
+    button{font:inherit;min-height:44px;border-radius:12px;border:1px solid var(--line);background:white;padding:10px 13px;font-weight:800;cursor:pointer}
+    button.primary{background:var(--pink);color:white;border-color:var(--pink)}button.yellow{background:var(--yellow);border-color:var(--yellow)}button.blue{background:var(--blue);color:white;border-color:var(--blue)}
+    button.danger{background:white;color:#a33;border-color:#e1bcbc}.nav button.active{background:var(--navy);color:white;border-color:var(--navy)}
+    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:14px}.card{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:0 4px 18px rgba(23,42,92,.06)}
+    h2,h3{margin:0 0 9px}.muted{color:var(--muted);font-size:13px}.field{margin:9px 0}.field label{display:block;font-size:12px;font-weight:900;margin-bottom:5px;text-transform:uppercase}
+    input{width:100%;padding:13px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:white}
+    .menu{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:12px}.menu button{text-align:left;padding:12px}.menu strong{display:block}.menu .price{font-size:18px;color:var(--navy);margin-top:3px}.menu .desc{font-size:11px;color:var(--muted);font-weight:500}
+    .order-row,.customer-row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #e7eaf0}.qty{display:flex;align-items:center;gap:6px}.qty button{min-height:34px;width:34px;padding:0}
+    .total{font-size:30px;font-weight:950}.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.empty{text-align:center;padding:24px;color:var(--muted)}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.stat{background:white;border:1px solid var(--line);border-radius:14px;padding:12px}.stat b{display:block;font-size:22px;margin-top:3px}
+    .badge{display:inline-block;padding:5px 8px;border-radius:99px;font-size:11px;font-weight:900;background:#eaf5ee;color:var(--green)}.badge.due{background:#fff0c9;color:#775700}
+    .purchase{padding:9px 0;border-top:1px solid #e7eaf0}.right{text-align:right}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.notice{padding:10px 12px;border-radius:12px;background:#fff8d9;border:1px solid #ead36b;font-size:13px}
+    .hidden{display:none!important}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.menu{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<header><h1>☕ Coffee Stand POS</h1><small id="dayLabel">Weekend POS</small></header>
+<div class="wrap">
+  <div class="nav">
+    <button class="active" data-view="order">New Purchase</button>
+    <button data-view="customers">Customers</button>
+    <button data-view="sales">Sales</button>
+    <button data-view="backup">Backup</button>
+  </div>
+
+  <section id="view-order">
+    <div class="grid">
+      <div class="card">
+        <h2>New Purchase</h2><div class="muted">Choose an existing customer or type a new name.</div>
+        <div class="field"><label>Customer name</label><input id="customerName" list="customerNames" placeholder="e.g. Maisy"></div>
+        <datalist id="customerNames"></datalist>
+        <div id="quickCustomers" class="toolbar"></div>
+        <div class="menu" id="menu"></div>
+      </div>
+      <div class="card">
+        <h3 id="purchaseTitle">Current Purchase</h3>
+        <div id="orderList"></div>
+        <div style="display:flex;justify-content:space-between;align-items:end;padding-top:12px"><strong>TOTAL</strong><span class="total" id="orderTotal">$0</span></div>
+        <div class="actions">
+          <button class="primary" id="savePurchase">Save Purchase</button>
+          <button id="clearPurchase">Clear</button>
+        </div>
+        <p class="muted">Check the bank transfer separately, then mark the purchase paid from the customer's record.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-customers" class="hidden">
+    <div class="card"><h2>Customers</h2><div class="muted">One customer can make multiple purchases throughout the weekend.</div><div id="customersList"></div></div>
+  </section>
+
+  <section id="view-sales" class="hidden">
+    <div class="card">
+      <h2>Sales</h2>
+      <div class="toolbar"><button class="yellow" id="newDay">Start New Day</button><span class="notice" id="currentDayNotice"></span></div>
+      <div class="stats">
+        <div class="stat"><span class="muted">PURCHASES</span><b id="statPurchases">0</b></div>
+        <div class="stat"><span class="muted">ITEMS SOLD</span><b id="statItems">0</b></div>
+        <div class="stat"><span class="muted">SALES</span><b id="statSales">$0</b></div>
+        <div class="stat"><span class="muted">OUTSTANDING</span><b id="statDue">$0</b></div>
+      </div>
+      <h3 style="margin-top:18px">Items sold</h3><div id="itemSales"></div>
+      <h3 style="margin-top:18px">Daily totals</h3><div id="dailySales"></div>
+    </div>
+  </section>
+
+  <section id="view-backup" class="hidden">
+    <div class="card">
+      <h2>Backup & Restore</h2>
+      <p class="muted">Keep a backup at the end of each day. The POS stores its working data on this device using IndexedDB.</p>
+      <div class="toolbar"><button class="blue" id="exportBtn">Export Weekend Backup</button><button id="importBtn">Restore Backup</button><input id="fileInput" type="file" accept=".json,application/json" class="hidden"></div>
+      <div class="notice">Recommended: export a backup after each day and before closing the weekend.</div>
+      <h3 style="margin-top:18px">Start New Weekend</h3><button class="danger" id="resetAll">Clear all POS data</button>
+    </div>
+  </section>
+</div>
+<script src="app.js"></script><script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{});}</script>
+</body>
+</html>

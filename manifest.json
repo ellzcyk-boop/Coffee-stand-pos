@@ -1,0 +1,10 @@
+{
+  "name": "Coffee Stand POS",
+  "short_name": "Coffee POS",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fffaf0",
+  "theme_color": "#172a5c",
+  "description": "Offline-first coffee stand point of sale.",
+  "icons": []
+}
